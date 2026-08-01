@@ -1,27 +1,37 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.h                                    :+:      :+:    :+:   */
+/*   test_gnl.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pahenriq <pahenriq@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/05 21:10:51 by pahenriq          #+#    #+#             */
-/*   Updated: 2026/07/05 21:10:51 by pahenriq         ###   ########.fr       */
+/*   Created: 2026/08/01 00:00:00 by pahenriq          #+#    #+#             */
+/*   Updated: 2026/08/01 00:00:00 by pahenriq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef GNL_H
-# define GNL_H
+#include "get_next_line.h"
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#include <stddef.h>
+int main(void)
+{
+	char	*line;
+	int		fd;
 
-#ifndef BUFFER_SIZE
-# define BUFFER_SIZE BUFSIZ
-#endif
-
-char	*get_next_line(int fd);
-
-size_t	ft_strlcat(char *dst, const char *src, size_t dstsize);
-size_t	ft_strlcpy(char *dst, const char *src, size_t dstsize);
-
-#endif
+	fd = open("file.txt", O_RDONLY);
+	if (fd == -1)
+	{
+		printf("Error opening file\n");
+		return (1);
+	}
+	while ((line = get_next_line(fd)) != NULL)
+	{
+		printf("%s", line);
+		free(line);
+	}
+	close(fd);
+	return (0);
+}

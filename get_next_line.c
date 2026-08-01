@@ -11,11 +11,8 @@
 /* ************************************************************************** */
 
 #include "get_next_line.h"
-#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
-
 
 char *realloc_line(char *line, size_t size)
 {
@@ -30,37 +27,44 @@ char *realloc_line(char *line, size_t size)
 	return line;
 }
 
-int line_len(char *line) {
-    int		i;
+int line_size(char *line, char delimiter)
+{
+	int i;
 
-    i = 0;
-    while (line[i] != '\n' && line[i])
-        i++;
-    return i;
+	i = 0;
+	while (line[i] != delimiter && line[i])
+		i++;
+	return i;
 }
 
-int buffer_init_line(int fd, char *buffer, char **line)
+int buffer_init_line(int fd, char *buffer, char delimiter, char **line)
 {
 	int		bytes_read;
 	int		size;
-	int		len;
+	int		line_len;
+	int		chunk_line_len;
 
-	len = line_len(buffer);
-	if (len > 0)
+	line_len = line_size(buffer, delimiter);
+	if (line_len > 0)
 		ft_strlcat(*line, buffer, BUFFER_SIZE + 1);
 	bytes_read = read(fd, buffer, BUFFER_SIZE);
-	if (bytes_read <= 0)
+	if (bytes_read <= 0 && line_len > 0)
+		return (line_len + 1);
+	else if (bytes_read <= 0)
 		return (-1);
 	buffer[bytes_read] = '\0';
-	size = len + bytes_read + 1;
-	*line = realloc_line(*line, size);	
+	chunk_line_len = line_size(buffer, delimiter);
+	if (buffer[chunk_line_len] == delimiter)
+		chunk_line_len++;
+	size = line_len + chunk_line_len + 1;
+	*line = realloc_line(*line, size);
 	if (!*line)
 		return (-1);
 	ft_strlcat(*line, buffer, size);
 	return (size);
 }
 
-int next_chunk_line(int fd, char *buffer, char **line, int len)
+int next_chunk_line(int fd, char *buffer, char delimiter, char **line)
 {
 	int		buff_line_len;
 	int		bytes_read;
@@ -71,61 +75,47 @@ int next_chunk_line(int fd, char *buffer, char **line, int len)
 	if (bytes_read > 0)
 	{
 		buffer[bytes_read] = '\0';
-		buff_line_len = line_len(buffer);
-		size = buff_line_len + len;
-		if (buffer[buff_line_len] == '\n')
+		buff_line_len = line_size(buffer, delimiter);
+		size = buff_line_len + line_size(*line, '\0');
+		if (buffer[buff_line_len] == delimiter)
 			size++;
+		size++;
 		*line = realloc_line(*line, size);
 		if (!*line)
 			return (-1);
 		ft_strlcat(*line, buffer, size);
 		if (buffer[buff_line_len] == '\0')
-			return next_chunk_line(fd, buffer, line, size);
+			return next_chunk_line(fd, buffer, delimiter, line);
 	}
 	return (buff_line_len);
 }
 
-char *get_next_line(int fd) {
+char *get_next_line(int fd)
+{
 	static char	buffer[BUFFER_SIZE + 1];
-	char	*line;
-	int		len;
+	char		delimiter;
+	char		*line;
+	int			len;
 
+	delimiter = '\n';
+	if (fd < 0)
+		return (NULL);
 	line = malloc(sizeof(char) * (BUFFER_SIZE + 1));
 	if (!line)
 		return NULL;
 	line[0] = '\0';
-	len = buffer_init_line(fd, buffer, &line);
+	len = buffer_init_line(fd, buffer, delimiter, &line);
 	if (len <= 0)
 		return (free(line), NULL);
-	if (line[len] == '\0')
+	if (buffer[line_size(line, delimiter)] == '\0')
 	{
-		len = next_chunk_line(fd, buffer, &line, len);
+		len = next_chunk_line(fd, buffer, delimiter, &line);
 		if (len < 0)
 			return (free(line), NULL);
 	}
-	if (buffer[len] == '\n')
+	len = line_size(line, delimiter);
+	if (buffer[len] == delimiter)
 		len++;
 	ft_strlcpy(buffer, &buffer[len], BUFFER_SIZE + 1);
 	return line;
-}
-
-int main(void) {
-    char *line;
-    int fd;
-
-	fd = open("file.txt", O_RDONLY);
-	if (fd == -1)
-	{
-		printf("Erro ao abrir arquivo\n");
-		return (1);
-	}
-
-    while((line = get_next_line(fd)) != NULL)
-    {
-        printf("%s", line);
-        free(line);
-    }
-
-	close(fd);
-    return (0);
 }
