@@ -6,7 +6,7 @@
 /*   By: pahenriq <pahenriq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 12:29:21 by pahenriq          #+#    #+#             */
-/*   Updated: 2026/08/02 13:46:42 by pahenriq         ###   ########.fr       */
+/*   Updated: 2026/08/02 13:51:49 by pahenriq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,6 @@ int	next_chunk_line(int fd, char *buffer, char delimiter, char **line)
 {
 	int	buff_line_len;
 	int	bytes_read;
-	int	str_len;
 	int	size;
 
 	buff_line_len = 0;
@@ -76,12 +75,11 @@ int	next_chunk_line(int fd, char *buffer, char delimiter, char **line)
 	{
 		buffer[bytes_read] = '\0';
 		buff_line_len = line_size(buffer, delimiter);
-		str_len = line_size(*line, '\0');
-		size = buff_line_len + str_len;
+		size = buff_line_len + line_size(*line, '\0');
 		if (buffer[buff_line_len] == delimiter)
 			size++;
 		else if (buffer[buff_line_len] == '\0')
-			size = bytes_read + str_len;
+			size = bytes_read + line_size(*line, '\0');
 		size++;
 		*line = realloc_line(*line, size);
 		if (!*line)
