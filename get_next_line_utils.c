@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line_utils.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pahenriq <pahenriq@student.42sp.org.br>    +#+  +:+       +#+        */
+/*   By: pahenriq <pahenriq@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 12:29:24 by pahenriq          #+#    #+#             */
-/*   Updated: 2026/07/05 12:29:24 by pahenriq         ###   ########.fr       */
+/*   Updated: 2026/08/02 13:41:52 by pahenriq         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
+#include <stdlib.h>
 
 size_t	ft_strlcpy(char *dst, const char *src, size_t dstsize)
 {
@@ -59,4 +60,27 @@ size_t	ft_strlcat(char *dst, const char *src, size_t dstsize)
 	}
 	dst[i] = '\0';
 	return (dst_len + src_len);
+}
+
+char	*realloc_line(char *line, size_t size)
+{
+	char	*temp;
+
+	temp = malloc(size);
+	if (!temp)
+		return (NULL);
+	ft_strlcpy(temp, line, size);
+	free(line);
+	line = temp;
+	return (line);
+}
+
+int	line_size(char *line, char delimiter)
+{
+	int	i;
+
+	i = 0;
+	while (line[i] != delimiter && line[i])
+		i++;
+	return (i);
 }
