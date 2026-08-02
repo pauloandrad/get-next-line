@@ -50,9 +50,10 @@ int buffer_init_line(int fd, char *buffer, char delimiter, char **line)
 	bytes_read = read(fd, buffer, BUFFER_SIZE);
 	if (bytes_read <= 0 && line_len > 0)
 		return (line_len + 1);
-	else if (bytes_read <= 0)
+	else if (bytes_read <= 0 && !buffer[0])
 		return (-1);
-	buffer[bytes_read] = '\0';
+	if (bytes_read > 0)
+		buffer[bytes_read] = '\0';
 	chunk_line_len = line_size(buffer, delimiter);
 	if (buffer[chunk_line_len] == delimiter)
 		chunk_line_len++;
@@ -79,6 +80,8 @@ int next_chunk_line(int fd, char *buffer, char delimiter, char **line)
 		size = buff_line_len + line_size(*line, '\0');
 		if (buffer[buff_line_len] == delimiter)
 			size++;
+		else if (buffer[buff_line_len] == '\0')
+			size = bytes_read + line_size(*line, '\0');
 		size++;
 		*line = realloc_line(*line, size);
 		if (!*line)
@@ -88,6 +91,13 @@ int next_chunk_line(int fd, char *buffer, char delimiter, char **line)
 			return next_chunk_line(fd, buffer, delimiter, line);
 	}
 	return (buff_line_len);
+}
+
+void	prepare_next_call(char *buffer, int len, char delimiter)
+{
+	if (buffer[len] == delimiter)
+		len++;
+	ft_strlcpy(buffer, &buffer[len], BUFFER_SIZE + 1);
 }
 
 char *get_next_line(int fd)
@@ -107,15 +117,15 @@ char *get_next_line(int fd)
 	len = buffer_init_line(fd, buffer, delimiter, &line);
 	if (len <= 0)
 		return (free(line), NULL);
-	if (buffer[line_size(line, delimiter)] == '\0')
+	if (line[line_size(line, delimiter)] == '\0' && buffer[0])
 	{
 		len = next_chunk_line(fd, buffer, delimiter, &line);
 		if (len < 0)
 			return (free(line), NULL);
 	}
-	len = line_size(line, delimiter);
-	if (buffer[len] == delimiter)
-		len++;
-	ft_strlcpy(buffer, &buffer[len], BUFFER_SIZE + 1);
+	len = line_size(buffer, delimiter);
+	prepare_next_call(buffer, len, delimiter);
 	return line;
 }
+
+

@@ -1,6 +1,4 @@
-.claude
-gnlTester
 *.o
 *.out
-*.debug
+
 
